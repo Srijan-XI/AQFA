@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="Air Quality Analysis and Forecasting - Predictive analytics for Air Quality Index using SARIMA, LSTM, and Prophet models">
+    <title>AQI Forecaster - Air Quality Analysis & Forecasting</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Animated background particles */
+        body::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-image:
+                radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
+            animation: pulse 15s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .landing-container {
+            max-width: 1200px;
+            padding: 2rem;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .logo {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            animation: float 3s ease-in-out infinite;
+            filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.3));
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-20px);
+            }
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            background: linear-gradient(to right, #fff, #f0f0f0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .subtitle {
+            font-size: 1.5rem;
+            font-weight: 300;
+            margin-bottom: 3rem;
+            opacity: 0.9;
+            animation: fadeInUp 0.8s ease-out 0.2s backwards;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            animation: fadeInUp 0.8s ease-out backwards;
+        }
+
+        .feature-card:nth-child(1) {
+            animation-delay: 0.3s;
+        }
+
+        .feature-card:nth-child(2) {
+            animation-delay: 0.4s;
+        }
+
+        .feature-card:nth-child(3) {
+            animation-delay: 0.5s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .feature-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .feature-desc {
+            font-size: 0.95rem;
+            opacity: 0.8;
+            line-height: 1.6;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 1.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 3rem;
+            animation: fadeInUp 0.8s ease-out 0.6s backwards;
+        }
+
+        .btn {
+            padding: 1rem 2.5rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn span {
+            position: relative;
+            z-index: 1;
+        }
+
+        .btn-primary {
+            background: white;
+            color: #667eea;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid white;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-3px);
+        }
+
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            margin: 4rem 0;
+            flex-wrap: wrap;
+        }
+
+        .stat {
+            text-align: center;
+            animation: fadeInUp 0.8s ease-out backwards;
+        }
+
+        .stat:nth-child(1) {
+            animation-delay: 0.7s;
+        }
+
+        .stat:nth-child(2) {
+            animation-delay: 0.8s;
+        }
+
+        .stat:nth-child(3) {
+            animation-delay: 0.9s;
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 800;
+            display: block;
+            background: linear-gradient(135deg, #fff 0%, #f0f0f0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-label {
+            font-size: 1rem;
+            opacity: 0.8;
+            margin-top: 0.5rem;
+        }
+
+        footer {
+            margin-top: 4rem;
+            opacity: 0.7;
+            font-size: 0.9rem;
+        }
+
+        footer a {
+            color: white;
+            text-decoration: none;
+            transition: opacity 0.3s;
+        }
+
+        footer a:hover {
+            opacity: 1;
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+
+            .subtitle {
+                font-size: 1.2rem;
+            }
+
+            .features {
+                grid-template-columns: 1fr;
+            }
+
+            .stats {
+                gap: 2rem;
+            }
+
+            .logo {
+                font-size: 3rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="landing-container">
+        <div class="logo">🌍</div>
+
+        <h1>Air Quality Forecasting<br>Dashboard</h1>
+
+        <p class="subtitle">
+            Advanced machine learning models for predicting Air Quality Index (AQI)<br>
+            Powered by SARIMA, LSTM, and Prophet
+        </p>
+
+        <div class="features">
+            <div class="feature-card">
+                <span class="feature-icon">📊</span>
+                <h3 class="feature-title">Data Analysis</h3>
+                <p class="feature-desc">Comprehensive analysis of air quality data from 50+ Indian cities spanning
+                    2015-2020</p>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">🔮</span>
+                <h3 class="feature-title">AI Forecasting</h3>
+                <p class="feature-desc">Predict AQI values 3-6 months in advance using state-of-the-art ML models</p>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">📈</span>
+                <h3 class="feature-title">Live Insights</h3>
+                <p class="feature-desc">Interactive visualizations and real-time pattern detection for pollution trends
+                </p>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat">
+                <span class="stat-number">7M+</span>
+                <p class="stat-label">Deaths Annually from<br>Air Pollution</p>
+            </div>
+            <div class="stat">
+                <span class="stat-number">50+</span>
+                <p class="stat-label">Cities<br>Analyzed</p>
+            </div>
+            <div class="stat">
+                <span class="stat-number">88%</span>
+                <p class="stat-label">Model Accuracy<br>(LSTM)</p>
+            </div>
+        </div>
+
+        <div class="cta-buttons">
+            <a href="web/home.html" class="btn btn-primary">
+                <span>Launch Dashboard</span>
+                <span>→</span>
+            </a>
+            <a href="./web/learn-more.html" class="btn btn-secondary">
+                <span>Learn More</span>
+            </a>
+        </div>
+
+        <footer>
+            <p>Built with ❤️ for cleaner air and better public health</p>
+            <p style="margin-top: 0.5rem;">
+                <a href="https://github.com" target="_blank">GitHub</a> •
+                <a href="web/home.html">Documentation</a>
+            </p>
+        </footer>
+    </div>
+</body>
+
+</html>
