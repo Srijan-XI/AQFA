@@ -104,7 +104,13 @@ air-quality-analysis-forecasting/
 │   └── test.ipynb                              # Model testing & comparison
 │
 ├── src/                           # Source code
-│   └── data_preprocessing.py      # Data preprocessing utilities
+│   ├── data_preprocessing.py      # Data preprocessing utilities
+│   └── csv_to_json_chunks.py      # CSV to JSON chunking utility
+│
+├── web/                           # Web assets (gitignored)
+│   └── json/                      # JSON chunks for web consumption
+│       ├── city_hour/             # City hourly data chunks
+│       └── station_hour/          # Station hourly data chunks
 │
 ├── tests/                         # Test suite
 │   ├── test_data_preprocessing.py
@@ -221,6 +227,71 @@ forecast = results.forecast(steps=len(test))
 - **Detailed Report**: See `report/report.md` for comprehensive analysis
 - **Notebook Documentation**: Each notebook contains markdown cells with explanations
 - **Code Comments**: Source code includes inline documentation
+
+---
+
+## 🔧 Utilities
+
+### CSV to JSON Chunking
+
+For web deployment or data pipeline integration, large CSV files can be split into smaller JSON chunks using the provided utility.
+
+**Script**: `src/csv_to_json_chunks.py`
+
+**Use Case**: Convert massive CSV datasets into manageable JSON files for:
+- Loading in web applications (avoid browser memory limits)
+- Distributing data across CDN
+- Progressive data loading
+- API endpoint pagination
+
+**Usage:**
+
+```bash
+# Basic usage - split with default settings (50k rows/chunk)
+python src/csv_to_json_chunks.py datasets/city_hour.csv
+
+# Custom output directory and chunk size
+python src/csv_to_json_chunks.py datasets/city_hour.csv -o web/json/city_hour -r 100000
+
+# With pretty printing (indentation)
+python src/csv_to_json_chunks.py datasets/station_hour.csv -o web/json/station_hour -r 100000 --indent 2
+
+# Compressed output
+python src/csv_to_json_chunks.py datasets/city_day.csv -o chunks/city_day --compression gz
+```
+
+**Available Options:**
+
+| Flag | Description | Default |
+|------|-------------|---------|
+| `-o`, `--output-dir` | Output directory for JSON chunks | `chunks` |
+| `-r`, `--rows-per-chunk` | Number of rows per chunk file | `50000` |
+| `--orient` | JSON structure format | `records` |
+| `--indent` | Pretty-print indentation (None=compact) | `None` |
+| `--compression` | Compress output (`gz`, `bz2`, `zip`, `xz`) | `None` |
+| `--ensure-ascii` | Escape non-ASCII characters | `False` |
+
+**Output Format:**
+
+Files are named sequentially: `<basename>.part0.json`, `<basename>.part1.json`, etc.
+
+**Example Output:**
+```bash
+$ python src/csv_to_json_chunks.py datasets/city_hour.csv -o web/json/city_hour -r 100000
+{
+  "status": "ok",
+  "result": {
+    "chunks": 8,
+    "rows": 707875,
+    "output_dir": "web/json/city_hour",
+    "base": "city_hour"
+  }
+}
+```
+
+**Note**: Generated JSON chunks in `web/json/` are gitignored to keep repository size manageable.
+
+---
 
 ## 🤝 Contributing
 
