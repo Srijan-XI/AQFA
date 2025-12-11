@@ -4,16 +4,10 @@
   "public": true,
   "cleanUrls": true,
   "trailingSlash": false,
-  "buildCommand": "echo 'No build required'",
-  "outputDirectory": "web",
-  "routes": [
+  "rewrites": [
     {
-      "src": "/",
-      "dest": "/index.html"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/web/$1"
+      "source": "/(.*)",
+      "destination": "/web/$1"
     }
   ],
   "headers": [
