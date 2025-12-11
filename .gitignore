@@ -31,7 +31,7 @@ wheels/
 .pytest_cache/
 *.pytest_cache/
 
-# JSON chunks output (generated files)
+# JSON chunks output (generated files only)
 web/json/
 chunks/
 *.part*.json

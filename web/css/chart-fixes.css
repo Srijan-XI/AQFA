@@ -1,0 +1,60 @@
+/* ===== Enhanced Chart Fixes - Additional Styles ===== */
+
+/* Tablet responsive */
+@media (max-width: 1024px) {
+    .charts-row {
+        grid-template-columns: 1fr;
+    }
+
+    .chart-container.half {
+        min-height: 400px;
+    }
+
+    .chart-container>canvas {
+        height: 360px !important;
+    }
+}
+
+/* Mobile enhancements for charts */
+@media (max-width: 768px) {
+    .chart-container {
+        padding: var(--spacing-md);
+        min-height: 350px;
+    }
+
+    .chart-container>canvas {
+        height: 320px !important;
+    }
+
+    .chart-container.half>canvas {
+        height: 320px !important;
+    }
+
+    .controls {
+        flex-direction: column;
+    }
+
+    .control-group {
+        width: 100%;
+    }
+}
+
+/* Small mobile */
+@media (max-width: 480px) {
+    .chart-container {
+        padding: var(--spacing-sm);
+        min-height: 280px;
+    }
+
+    .chart-container>canvas {
+        height: 260px !important;
+    }
+
+    .chart-container.half>canvas {
+        height: 260px !important;
+    }
+
+    .metrics-grid {
+        grid-template-columns: 1fr;
+    }
+}
