@@ -21,12 +21,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Prepare deployment directory
-        run: |
-          mkdir -p _site
-          cp -r web/* _site/
-          ls -la _site/
           
       - name: Setup Pages
         uses: actions/configure-pages@v5
@@ -34,7 +28,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '_site'
+          path: 'web'
 
   deploy:
     needs: build
