@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="Air Quality Analysis and Forecasting - Predictive analytics for Air Quality Index using SARIMA, LSTM, and Prophet models">
+    <title>AQI Forecaster - Air Quality Analysis & Forecasting</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/chart-fixes.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        /* Landing Page Specific Styles */
+        .landing-page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .landing-page::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-image:
+                radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
+            animation: pulse 15s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .landing-container {
+            max-width: 1200px;
+            padding: 2rem;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+            color: white;
+        }
+
+        .landing-logo {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            animation: float 3s ease-in-out infinite;
+            filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.3));
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-20px);
+            }
+        }
+
+        .landing-title {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            background: linear-gradient(to right, #fff, #f0f0f0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .landing-subtitle {
+            font-size: 1.5rem;
+            font-weight: 300;
+            margin-bottom: 3rem;
+            opacity: 0.9;
+            animation: fadeInUp 0.8s ease-out 0.2s backwards;
+        }
+
+        .landing-features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+
+        .landing-feature-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            animation: fadeInUp 0.8s ease-out backwards;
+        }
+
+        .landing-feature-card:nth-child(1) {
+            animation-delay: 0.3s;
+        }
+
+        .landing-feature-card:nth-child(2) {
+            animation-delay: 0.4s;
+        }
+
+        .landing-feature-card:nth-child(3) {
+            animation-delay: 0.5s;
+        }
+
+        .landing-feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .landing-feature-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .landing-feature-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .landing-feature-desc {
+            font-size: 0.95rem;
+            opacity: 0.8;
+            line-height: 1.6;
+        }
+
+        .landing-cta-buttons {
+            display: flex;
+            gap: 1.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 3rem;
+            animation: fadeInUp 0.8s ease-out 0.6s backwards;
+        }
+
+        .landing-btn {
+            padding: 1rem 2.5rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .landing-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .landing-btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .landing-btn span {
+            position: relative;
+            z-index: 1;
+        }
+
+        .landing-btn-primary {
+            background: white;
+            color: #667eea;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .landing-btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .landing-btn-secondary {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid white;
+        }
+
+        .landing-btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-3px);
+        }
+
+        .landing-stats {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            margin: 4rem 0;
+            flex-wrap: wrap;
+        }
+
+        .landing-stat {
+            text-align: center;
+            animation: fadeInUp 0.8s ease-out backwards;
+        }
+
+        .landing-stat:nth-child(1) {
+            animation-delay: 0.7s;
+        }
+
+        .landing-stat:nth-child(2) {
+            animation-delay: 0.8s;
+        }
+
+        .landing-stat:nth-child(3) {
+            animation-delay: 0.9s;
+        }
+
+        .landing-stat-number {
+            font-size: 3rem;
+            font-weight: 800;
+            display: block;
+            background: linear-gradient(135deg, #fff 0%, #f0f0f0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .landing-stat-label {
+            font-size: 1rem;
+            opacity: 0.8;
+            margin-top: 0.5rem;
+        }
+
+        .landing-footer {
+            margin-top: 4rem;
+            opacity: 0.7;
+            font-size: 0.9rem;
+        }
+
+        .landing-footer a {
+            color: white;
+            text-decoration: none;
+            transition: opacity 0.3s;
+        }
+
+        .landing-footer a:hover {
+            opacity: 1;
+            text-decoration: underline;
+        }
+
+        /* Hide/Show sections */
+        .landing-page.hidden {
+            display: none;
+        }
+
+        .dashboard-wrapper {
+            display: none;
+        }
+
+        .dashboard-wrapper.active {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .landing-title {
+                font-size: 2.5rem;
+            }
+
+            .landing-subtitle {
+                font-size: 1.2rem;
+            }
+
+            .landing-features {
+                grid-template-columns: 1fr;
+            }
+
+            .landing-stats {
+                gap: 2rem;
+            }
+
+            .landing-logo {
+                font-size: 3rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Landing Page Section -->
+    <div id="landingPage" class="landing-page">
+        <div class="landing-container">
+            <div class="landing-logo">🌍</div>
+
+            <h1 class="landing-title">Air Quality Forecasting<br>Dashboard</h1>
+
+            <p class="landing-subtitle">
+                Advanced machine learning models for predicting Air Quality Index (AQI)<br>
+                Powered by SARIMA, LSTM, and Prophet
+            </p>
+
+            <div class="landing-features">
+                <div class="landing-feature-card">
+                    <span class="landing-feature-icon">📊</span>
+                    <h3 class="landing-feature-title">Data Analysis</h3>
+                    <p class="landing-feature-desc">Comprehensive analysis of air quality data from 50+ Indian cities
+                        spanning
+                        2015-2020</p>
+                </div>
+                <div class="landing-feature-card">
+                    <span class="landing-feature-icon">🔮</span>
+                    <h3 class="landing-feature-title">AI Forecasting</h3>
+                    <p class="landing-feature-desc">Predict AQI values 3-6 months in advance using state-of-the-art ML
+                        models</p>
+                </div>
+                <div class="landing-feature-card">
+                    <span class="landing-feature-icon">📈</span>
+                    <h3 class="landing-feature-title">Live Insights</h3>
+                    <p class="landing-feature-desc">Interactive visualizations and real-time pattern detection for
+                        pollution trends
+                    </p>
+                </div>
+            </div>
+
+            <div class="landing-stats">
+                <div class="landing-stat">
+                    <span class="landing-stat-number">7M+</span>
+                    <p class="landing-stat-label">Deaths Annually from<br>Air Pollution</p>
+                </div>
+                <div class="landing-stat">
+                    <span class="landing-stat-number">50+</span>
+                    <p class="landing-stat-label">Cities<br>Analyzed</p>
+                </div>
+                <div class="landing-stat">
+                    <span class="landing-stat-number">88%</span>
+                    <p class="landing-stat-label">Model Accuracy<br>(LSTM)</p>
+                </div>
+            </div>
+
+            <div class="landing-cta-buttons">
+                <a href="#" class="landing-btn landing-btn-primary" onclick="showDashboard(); return false;">
+                    <span>Launch Dashboard</span>
+                    <span>→</span>
+                </a>
+                <a href="learn-more.html" class="landing-btn landing-btn-secondary">
+                    <span>Learn More</span>
+                </a>
+            </div>
+
+            <footer class="landing-footer">
+                <p>Built with ❤️ for cleaner air and better public health</p>
+                <p style="margin-top: 0.5rem;">
+                    <a href="https://github.com/Srijan-XI/AQFA" target="_blank">GitHub</a> •
+                    <a href="live.html">Live Data</a>
+                </p>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Dashboard Wrapper -->
+    <div id="dashboardWrapper" class="dashboard-wrapper">
+        <!-- Navigation -->
+        <nav class="navbar glass-effect">
+            <div class="nav-container">
+                <div class="nav-brand" style="cursor: pointer;" onclick="showLanding()">
+                    <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 15a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" />
+                        <path d="M9.5 9.5c-1-1-2.5-1.5-4.5-1s-3 .5-4 1.5" />
+                        <path d="M14 8c1.5-2 4-3 7-3" />
+                        <path d="M12 12h.01" />
+                        <circle cx="16" cy="13" r="4" />
+                        <path d="M20 16c.5-.5 1.5-1 2.5-1" />
+                    </svg>
+                    <span class="brand-text">AQI <span class="gradient-text">Forecaster</span></span>
+                </div>
+                <ul class="nav-menu">
+                    <li><a href="#dashboard" class="nav-link active" data-page="dashboard">Dashboard</a></li>
+                    <li><a href="#analysis" class="nav-link" data-page="analysis">Analysis</a></li>
+                    <li><a href="#forecast" class="nav-link" data-page="forecast">Forecast</a></li>
+                    <li><a href="#models" class="nav-link" data-page="models">Models</a></li>
+                    <li><a href="#about" class="nav-link" data-page="about">About</a></li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Dashboard Page -->
+            <div id="dashboard" class="page active">
+                <div class="hero-section">
+                    <div class="hero-content">
+                        <h1 class="hero-title">
+                            Air Quality<br>
+                            <span class="gradient-text animate-gradient">Analysis & Forecasting</span>
+                        </h1>
+                        <p class="hero-subtitle">Time-series analysis and forecasting of Air Quality Index (AQI) using
+                            advanced machine learning models</p>
+                        <div class="hero-stats">
+                            <div class="stat-card glass-effect">
+                                <div class="stat-icon hazard">⚠️</div>
+                                <div class="stat-content">
+                                    <div class="stat-value">7M+</div>
+                                    <div class="stat-label">Annual Deaths from Air Pollution</div>
+                                </div>
+                            </div>
+                            <div class="stat-card glass-effect">
+                                <div class="stat-icon success">📊</div>
+                                <div class="stat-content">
+                                    <div class="stat-value">3-6</div>
+                                    <div class="stat-label">Months Forecast Range</div>
+                                </div>
+                            </div>
+                            <div class="stat-card glass-effect">
+                                <div class="stat-icon info">🏙️</div>
+                                <div class="stat-content">
+                                    <div class="stat-value">50+</div>
+                                    <div class="stat-label">Cities Analyzed</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Key Insights -->
+                <section class="section">
+                    <h2 class="section-title">Key Insights</h2>
+                    <div class="insights-grid">
+                        <div class="insight-card glass-effect">
+                            <div class="insight-icon season">❄️</div>
+                            <h3>Seasonal Patterns</h3>
+                            <p>Strong winter peaks (Nov-Jan) with AQI levels exceeding 400 in Delhi. Monsoon dips
+                                (Jul-Sep)
+                                show significant improvement.</p>
+                            <div class="insight-badge">High Confidence</div>
+                        </div>
+                        <div class="insight-card glass-effect">
+                            <div class="insight-icon trend">📈</div>
+                            <h3>Rising Trend</h3>
+                            <p>Increasing pollution levels observed in major cities from 2015-2020, with Delhi showing
+                                the
+                                most significant growth.</p>
+                            <div class="insight-badge warning">Needs Attention</div>
+                        </div>
+                        <div class="insight-card glass-effect">
+                            <div class="insight-icon pollutant">🔬</div>
+                            <h3>Primary Pollutants</h3>
+                            <p>PM2.5 and PM10 are the primary AQI drivers, contributing to 70%+ of air quality
+                                degradation.
+                            </p>
+                            <div class="insight-badge critical">Critical</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Quick Stats -->
+                <section class="section">
+                    <h2 class="section-title">Current AQI Overview</h2>
+                    <div class="chart-container glass-effect">
+                        <canvas id="overviewChart"></canvas>
+                    </div>
+                </section>
+
+                <!-- CTA Section -->
+                <section class="cta-section">
+                    <div class="cta-card glass-effect">
+                        <h2>Explore Forecasting Models</h2>
+                        <p>Compare SARIMA, LSTM, and Prophet models for accurate AQI predictions</p>
+                        <button class="cta-button" onclick="navigateToPage('models')">
+                            View Models
+                            <svg class="button-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M5 12h14M12 5l7 7-7 7" />
+                            </svg>
+                        </button>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Analysis Page -->
+            <div id="analysis" class="page">
+                <h1 class="page-title">Data Analysis</h1>
+
+                <!-- City Selector -->
+                <div class="controls glass-effect">
+                    <div class="control-group">
+                        <label for="citySelect">Select City:</label>
+                        <select id="citySelect" class="custom-select">
+                            <option value="Delhi">Delhi</option>
+                            <option value="Mumbai">Mumbai</option>
+                            <option value="Jaipur">Jaipur</option>
+                            <option value="Guwahati">Guwahati</option>
+                            <option value="Bangalore">Bangalore</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label for="timeRange">Time Range:</label>
+                        <select id="timeRange" class="custom-select">
+                            <option value="2015-2020">2015-2020 (Full)</option>
+                            <option value="2019-2020">2019-2020</option>
+                            <option value="2018-2019">2018-2019</option>
+                            <option value="2017-2018">2017-2018</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- AQI Trend Chart -->
+                <div class="chart-section">
+                    <h2 class="section-title">AQI Trend Over Time</h2>
+                    <div class="chart-container glass-effect">
+                        <canvas id="trendChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Pollutant Breakdown -->
+                <div class="chart-section">
+                    <h2 class="section-title">Pollutant Breakdown</h2>
+                    <div class="charts-row">
+                        <div class="chart-container glass-effect half">
+                            <canvas id="pollutantPieChart"></canvas>
+                        </div>
+                        <div class="chart-container glass-effect half">
+                            <canvas id="monthlyPatternChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statistics Table -->
+                <div class="section">
+                    <h2 class="section-title">Statistical Summary</h2>
+                    <div class="table-container glass-effect">
+                        <table class="data-table" id="statsTable">
+                            <thead>
+                                <tr>
+                                    <th>Metric</th>
+                                    <th>PM2.5</th>
+                                    <th>PM10</th>
+                                    <th>NO2</th>
+                                    <th>CO</th>
+                                    <th>SO2</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Mean</strong></td>
+                                    <td>89.4</td>
+                                    <td>156.2</td>
+                                    <td>45.3</td>
+                                    <td>1.2</td>
+                                    <td>18.7</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Max</strong></td>
+                                    <td>456.0</td>
+                                    <td>632.0</td>
+                                    <td>198.0</td>
+                                    <td>7.8</td>
+                                    <td>89.4</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Std Dev</strong></td>
+                                    <td>67.3</td>
+                                    <td>98.7</td>
+                                    <td>32.1</td>
+                                    <td>0.9</td>
+                                    <td>15.2</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Forecast Page -->
+            <div id="forecast" class="page">
+                <h1 class="page-title">AQI Forecasting</h1>
+
+                <!-- Model Selector -->
+                <div class="controls glass-effect">
+                    <div class="control-group">
+                        <label for="modelSelect">Select Model:</label>
+                        <select id="modelSelect" class="custom-select">
+                            <option value="sarima">SARIMA</option>
+                            <option value="lstm">LSTM</option>
+                            <option value="prophet">Prophet</option>
+                            <option value="ensemble">Ensemble</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label for="forecastCity">City:</label>
+                        <select id="forecastCity" class="custom-select">
+                            <option value="Delhi">Delhi</option>
+                            <option value="Mumbai">Mumbai</option>
+                            <option value="Jaipur">Jaipur</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label for="forecastHorizon">Forecast Horizon:</label>
+                        <select id="forecastHorizon" class="custom-select">
+                            <option value="3">3 Months</option>
+                            <option value="6" selected>6 Months</option>
+                            <option value="12">12 Months</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Forecast Chart -->
+                <div class="section">
+                    <h2 class="section-title">Forecast Results</h2>
+                    <div class="chart-container glass-effect">
+                        <canvas id="forecastChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Forecast Metrics -->
+                <div class="section">
+                    <h2 class="section-title">Model Performance</h2>
+                    <div class="metrics-grid">
+                        <div class="metric-card glass-effect">
+                            <div class="metric-label">RMSE</div>
+                            <div class="metric-value" id="rmseValue">23.45</div>
+                            <div class="metric-trend positive">-5.2% vs baseline</div>
+                        </div>
+                        <div class="metric-card glass-effect">
+                            <div class="metric-label">MAE</div>
+                            <div class="metric-value" id="maeValue">18.76</div>
+                            <div class="metric-trend positive">-3.8% vs baseline</div>
+                        </div>
+                        <div class="metric-card glass-effect">
+                            <div class="metric-label">MAPE</div>
+                            <div class="metric-value" id="mapeValue">12.3%</div>
+                            <div class="metric-trend positive">-2.1% vs baseline</div>
+                        </div>
+                        <div class="metric-card glass-effect">
+                            <div class="metric-label">R² Score</div>
+                            <div class="metric-value" id="r2Value">0.89</div>
+                            <div class="metric-trend positive">+0.05 vs baseline</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Models Page -->
+            <div id="models" class="page">
+                <h1 class="page-title">Forecasting Models</h1>
+
+                <!-- Model Comparison -->
+                <div class="section">
+                    <h2 class="section-title">Model Comparison</h2>
+                    <div class="model-grid">
+                        <div class="model-card glass-effect">
+                            <div class="model-header">
+                                <div class="model-icon sarima">📊</div>
+                                <h3>SARIMA</h3>
+                                <span class="model-badge">Statistical</span>
+                            </div>
+                            <p class="model-description">Classical time-series model with explicit seasonality handling.
+                                Best for interpretable results.</p>
+                            <div class="model-specs">
+                                <div class="spec-item">
+                                    <span class="spec-label">Configuration:</span>
+                                    <span class="spec-value">Order=(0,1,3), Seasonal=(0,1,1,12)</span>
+                                </div>
+                                <div class="spec-item">
+                                    <span class="spec-label">Speed:</span>
+                                    <span class="spec-value">⚡ Fast</span>
+                                </div>
+                                <div class="spec-item">
+                                    <span class="spec-label">Interpretability:</span>
+                                    <span class="spec-value">✅ High</span>
+                                </div>
+                            </div>
+                            <div class="model-performance">
+                                <div class="performance-bar">
+                                    <div class="bar-fill" style="width: 75%"></div>
+                                </div>
+                                <span class="performance-label">Performance: 75%</span>
+                            </div>
+                        </div>
+
+                        <div class="model-card glass-effect highlight">
+                            <div class="model-header">
+                                <div class="model-icon lstm">🧠</div>
+                                <h3>LSTM</h3>
+                                <span class="model-badge">Deep Learning</span>
+                            </div>
+                            <p class="model-description">Recurrent Neural Network capable of capturing complex
+                                non-linear
+                                patterns in sequential data.</p>
+                            <div class="model-specs">
+                                <div class="spec-item">
+                                    <span class="spec-label">Configuration:</span>
+                                    <span class="spec-value">2×32 LSTM units, 50 epochs</span>
+                                </div>
+                                <div class="spec-item">
+                                    <span class="spec-label">Speed:</span>
+                                    <span class="spec-value">🐌 Slow</span>
+                                </div>
+                                <div class="spec-item">
+                                    <span class="spec-label">Interpretability:</span>
+                                    <span class="spec-value">❌ Low</span>
+                                </div>
+                            </div>
+                            <div class="model-performance">
+                                <div class="performance-bar">
+                                    <div class="bar-fill" style="width: 88%"></div>
+                                </div>
+                                <span class="performance-label">Performance: 88%</span>
+                            </div>
+                        </div>
+
+                        <div class="model-card glass-effect">
+                            <div class="model-header">
+                                <div class="model-icon prophet">🔮</div>
+                                <h3>Prophet</h3>
+                                <span class="model-badge recommended">Recommended</span>
+                            </div>
+                            <p class="model-description">Facebook's probabilistic forecasting model. Robust to outliers
+                                with
+                                uncertainty intervals.</p>
+                            <div class="model-specs">
+                                <div class="spec-item">
+                                    <span class="spec-label">Configuration:</span>
+                                    <span class="spec-value">Yearly seasonality, cmdstanpy</span>
+                                </div>
+                                <div class="spec-item">
+                                    <span class="spec-label">Speed:</span>
+                                    <span class="spec-value">⚡⚡ Very Fast</span>
+                                </div>
+                                <div class="spec-item">
+                                    <span class="spec-label">Interpretability:</span>
+                                    <span class="spec-value">✅ High</span>
+                                </div>
+                            </div>
+                            <div class="model-performance">
+                                <div class="performance-bar">
+                                    <div class="bar-fill" style="width: 85%"></div>
+                                </div>
+                                <span class="performance-label">Performance: 85%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Comparison Chart -->
+                <div class="section">
+                    <h2 class="section-title">Performance Metrics Comparison</h2>
+                    <div class="chart-container glass-effect">
+                        <canvas id="modelComparisonChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- About Page -->
+            <div id="about" class="page">
+                <h1 class="page-title">About the Project</h1>
+
+                <div class="about-content">
+                    <section class="about-section glass-effect">
+                        <h2>📋 Overview</h2>
+                        <p>This project explores and forecasts urban air quality using daily city-level data from India
+                            (2015–2020). The analysis focuses on identifying pollution trends, seasonal patterns, and
+                            building predictive models to forecast AQI values 3–6 months in advance.</p>
+                    </section>
+
+                    <section class="about-section glass-effect">
+                        <h2>🎯 Problem Statement</h2>
+                        <p>Air pollution causes <strong>7 million premature deaths globally</strong> per year. Indian
+                            cities
+                            like Delhi frequently experience hazardous AQI levels (>400) during winter months.</p>
+                        <p><strong>Solution:</strong> Accurate AQI forecasting enables governments to implement timely
+                            pollution control measures, citizens to plan outdoor activities safely, and health systems
+                            to
+                            prepare for pollution-related emergencies.</p>
+                    </section>
+
+                    <section class="about-section glass-effect">
+                        <h2>📊 Dataset</h2>
+                        <ul class="feature-list">
+                            <li><strong>Source:</strong> Kaggle & Central Pollution Control Board (CPCB)</li>
+                            <li><strong>Time Period:</strong> 2015–2020</li>
+                            <li><strong>Cities:</strong> 50+ cities including Delhi, Mumbai, Bangalore, Jaipur</li>
+                            <li><strong>Pollutants:</strong> AQI, PM2.5, PM10, NO2, CO, SO2, O3</li>
+                            <li><strong>Total Records:</strong> 29,000+ daily measurements</li>
+                        </ul>
+                    </section>
+
+                    <section class="about-section glass-effect">
+                        <h2>🛠️ Technology Stack</h2>
+                        <div class="tech-grid">
+                            <div class="tech-item">
+                                <div class="tech-icon">🐍</div>
+                                <div class="tech-name">Python</div>
+                            </div>
+                            <div class="tech-item">
+                                <div class="tech-icon">📊</div>
+                                <div class="tech-name">Pandas</div>
+                            </div>
+                            <div class="tech-item">
+                                <div class="tech-icon">📈</div>
+                                <div class="tech-name">Statsmodels</div>
+                            </div>
+                            <div class="tech-item">
+                                <div class="tech-icon">🧠</div>
+                                <div class="tech-name">TensorFlow</div>
+                            </div>
+                            <div class="tech-item">
+                                <div class="tech-icon">🔮</div>
+                                <div class="tech-name">Prophet</div>
+                            </div>
+                            <div class="tech-item">
+                                <div class="tech-icon">📉</div>
+                                <div class="tech-name">Chart.js</div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="about-section glass-effect">
+                        <h2>📈 Key Findings</h2>
+                        <ul class="feature-list">
+                            <li><strong>Seasonality:</strong> Strong winter peaks (Nov–Jan), monsoon dips (Jul–Sep)</li>
+                            <li><strong>Trend:</strong> Increasing pollution levels in Delhi from 2015–2020</li>
+                            <li><strong>Primary Pollutants:</strong> PM2.5 and PM10 are primary AQI drivers</li>
+                            <li><strong>Best Model:</strong> Prophet recommended for production (robustness +
+                                uncertainty)
+                            </li>
+                            <li><strong>Ensemble:</strong> Combination of SARIMA + Prophet for deployment</li>
+                        </ul>
+                    </section>
+
+                    <section class="about-section glass-effect">
+                        <h2>🤝 Use Cases</h2>
+                        <div class="use-case-grid">
+                            <div class="use-case-card">
+                                <div class="use-case-icon">🏛️</div>
+                                <h3>Government</h3>
+                                <p>Implement timely pollution control measures and emergency protocols</p>
+                            </div>
+                            <div class="use-case-card">
+                                <div class="use-case-icon">👥</div>
+                                <h3>Citizens</h3>
+                                <p>Plan outdoor activities and protect health with advance warnings</p>
+                            </div>
+                            <div class="use-case-card">
+                                <div class="use-case-icon">🏥</div>
+                                <h3>Healthcare</h3>
+                                <p>Prepare for pollution-related emergencies and resource allocation</p>
+                            </div>
+                            <div class="use-case-card">
+                                <div class="use-case-icon">🔬</div>
+                                <h3>Researchers</h3>
+                                <p>Environmental data analysis and public health research</p>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer glass-effect">
+            <div class="footer-content">
+                <p>Built with ❤️ for cleaner air and better public health</p>
+                <p class="footer-links">
+                    <a href="https://github.com/Srijan-XI/AQFA" target="_blank">GitHub</a> •
+                    <a href="#dashboard">Documentation</a> •
+                    <a href="#about">About</a>
+                </p>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // Toggle between landing and dashboard
+        function showDashboard() {
+            document.getElementById('landingPage').classList.add('hidden');
+            document.getElementById('dashboardWrapper').classList.add('active');
+        }
+
+        function showLanding() {
+            document.getElementById('landingPage').classList.remove('hidden');
+            document.getElementById('dashboardWrapper').classList.remove('active');
+        }
+
+        // Check if there's a hash in the URL on load
+        window.addEventListener('DOMContentLoaded', () => {
+            if (window.location.hash && window.location.hash !== '#') {
+                showDashboard();
+            }
+        });
+    </script>
+    <script src="js/openmeteo.js"></script>
+    <script src="js/app.js"></script>
+</body>
+
+</html>

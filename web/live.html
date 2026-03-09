@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Real-time Air Quality Dashboard powered by Open-Meteo API">
+    <title>Live Air Quality Dashboard - Open-Meteo</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .realtime-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .city-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .city-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .city-name {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .aqi-large {
+            font-size: 3rem;
+            font-weight: 700;
+            margin: 1rem 0;
+            line-height: 1;
+        }
+
+        .aqi-category {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .pollutant-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .pollutant-item {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 0.75rem;
+            border-radius: 8px;
+        }
+
+        .pollutant-label {
+            font-size: 0.75rem;
+            color: #8892b6;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .pollutant-value {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #ffffff;
+            margin-top: 0.25rem;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #4facfe;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .health-alert {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(79, 172, 254, 0.1);
+            border-left: 3px solid #4facfe;
+            border-radius: 8px;
+        }
+
+        .health-alert h4 {
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #4facfe;
+        }
+
+        .health-alert p {
+            font-size: 0.875rem;
+            color: #b8c1ec;
+            line-height: 1.5;
+        }
+
+        .controls-bar {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .timestamp {
+            text-align: center;
+            color: #8892b6;
+            font-size: 0.875rem;
+            margin: 1rem 0;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar glass-effect">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 15a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" />
+                    <circle cx="16" cy="13" r="4" />
+                </svg>
+                <span class="brand-text">Live <span class="gradient-text">Air Quality</span></span>
+            </div>
+            <div>
+                <a href="index.html" style="color: #b8c1ec; text-decoration: none; font-weight: 500;">← Back to
+                    Dashboard</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="hero-section">
+            <div class="hero-content">
+                <h1 class="hero-title">
+                    Real-Time Air Quality<br>
+                    <span class="gradient-text animate-gradient">Powered by Open-Meteo</span>
+                </h1>
+                <p class="hero-subtitle">Live air quality data from Open-Meteo's free air quality API</p>
+            </div>
+        </div>
+
+        <div class="controls-bar">
+            <button class="btn btn-primary" onclick="loadAllCities()" id="loadBtn">
+                🔄 Load Live Data
+            </button>
+            <button class="btn btn-primary" onclick="loadForecast()" id="forecastBtn">
+                📈 7-Day Forecast
+            </button>
+        </div>
+
+        <div class="timestamp" id="timestamp"></div>
+
+        <div id="loading" style="text-align: center; display: none; margin: 2rem 0;">
+            <div class="loading-spinner"></div>
+            <p style="color: #8892b6; margin-top: 1rem;">Loading data from Open-Meteo...</p>
+        </div>
+
+        <div class="realtime-grid" id="cityGrid"></div>
+
+        <section class="section">
+            <h2 class="section-title">About Open-Meteo Air Quality API</h2>
+            <div class="about-section glass-effect">
+                <p style="color: #b8c1ec; line-height: 1.7;">
+                    Open-Meteo is a free, open-source weather and air quality API that provides real-time and forecast
+                    data
+                    without requiring an API key. It offers comprehensive air quality metrics including PM2.5, PM10,
+                    NO₂,
+                    CO, SO₂, O₃, and AQI values using both European and US standards.
+                </p>
+                <ul class="feature-list" style="margin-top: 1rem;">
+                    <li><strong>Real-time data</strong> updated hourly</li>
+                    <li><strong>5-day forecast</strong> with hourly resolution</li>
+                    <li><strong>Global coverage</strong> with 11km resolution</li>
+                    <li><strong>No API key required</strong> - completely free</li>
+                    <li><strong>High accuracy</strong> - data from CAMS (Copernicus Atmosphere Monitoring Service)</li>
+                </ul>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer glass-effect">
+        <div class="footer-content">
+            <p>Powered by <a href="https://open-meteo.com" target="_blank" style="color: #4facfe;">Open-Meteo</a> Air
+                Quality API</p>
+            <p>Data updated hourly • Built with ❤️ for cleaner air</p>
+        </div>
+    </footer>
+
+    <script src="js/openmeteo.js"></script>
+    <script>
+        let currentData = {};
+
+        async function loadAllCities() {
+            const btn = document.getElementById('loadBtn');
+            const loading = document.getElementById('loading');
+            const grid = document.getElementById('cityGrid');
+
+            btn.disabled = true;
+            btn.textContent = '⏳ Loading...';
+            loading.style.display = 'block';
+            grid.innerHTML = '';
+
+            try {
+                const cities = OpenMeteoAQ.CITIES;
+                const data = await OpenMeteoAQ.getMultipleCities(cities);
+
+                currentData = data;
+                displayCities(data);
+                updateTimestamp();
+
+                btn.textContent = '✓ Loaded!';
+                setTimeout(() => {
+                    btn.textContent = '🔄 Refresh Data';
+                    btn.disabled = false;
+                }, 2000);
+            } catch (error) {
+                console.error('Error loading cities:', error);
+                btn.textContent = '❌ Error';
+                setTimeout(() => {
+                    btn.textContent = '🔄 Try Again';
+                    btn.disabled = false;
+                }, 2000);
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+
+        async function loadForecast() {
+            const btn = document.getElementById('forecastBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ Loading...';
+
+            try {
+                const city = 'Delhi'; // Default to Delhi
+                const forecast = await OpenMeteoAQ.getDailyAverage(city, 7);
+
+                if (forecast) {
+                    displayForecast(forecast);
+                    btn.textContent = '✓ Forecast Loaded!';
+                }
+
+                setTimeout(() => {
+                    btn.textContent = '📈 7-Day Forecast';
+                    btn.disabled = false;
+                }, 2000);
+            } catch (error) {
+                console.error('Error loading forecast:', error);
+                btn.textContent = '❌ Error';
+                setTimeout(() => {
+                    btn.textContent = '📈 Try Again';
+                    btn.disabled = false;
+                }, 2000);
+            }
+        }
+
+        function displayCities(cities) {
+            const grid = document.getElementById('cityGrid');
+            grid.innerHTML = '';
+
+            cities.forEach(cityData => {
+                if (!cityData.current) return;
+
+                const card = createCityCard(cityData);
+                grid.appendChild(card);
+            });
+        }
+
+        function createCityCard(cityData) {
+            const card = document.createElement('div');
+            card.className = 'city-card';
+
+            const { current, city } = cityData;
+            const categoryInfo = OpenMeteoAQ.getAQICategory(current.aqi);
+            const healthInfo = OpenMeteoAQ.getHealthRecommendations(current.aqi);
+
+            card.innerHTML = `
+                <div class="city-name">
+                    📍 ${city}
+                    <span style="margin-left: auto; font-size: 1.5rem;">${healthInfo.icon}</span>
+                </div>
+                <div class="aqi-large" style="color: ${categoryInfo.color};">
+                    ${current.aqi}
+                </div>
+                <div class="aqi-category" style="background-color: ${categoryInfo.color}20; color: ${categoryInfo.color}; border: 1px solid ${categoryInfo.color};">
+                    ${categoryInfo.category}
+                </div>
+                
+                <div class="pollutant-grid">
+                    <div class="pollutant-item">
+                        <div class="pollutant-label">PM2.5</div>
+                        <div class="pollutant-value">${current.pm25.toFixed(1)} μg/m³</div>
+                    </div>
+                    <div class="pollutant-item">
+                        <div class="pollutant-label">PM10</div>
+                        <div class="pollutant-value">${current.pm10.toFixed(1)} μg/m³</div>
+                    </div>
+                    <div class="pollutant-item">
+                        <div class="pollutant-label">NO₂</div>
+                        <div class="pollutant-value">${current.no2.toFixed(1)} μg/m³</div>
+                    </div>
+                    <div class="pollutant-item">
+                        <div class="pollutant-label">O₃</div>
+                        <div class="pollutant-value">${current.o3.toFixed(1)} μg/m³</div>
+                    </div>
+                </div>
+                
+                <div class="health-alert">
+                    <h4>Health Recommendation</h4>
+                    <p>${healthInfo.general}</p>
+                </div>
+            `;
+
+            return card;
+        }
+
+        function displayForecast(forecastData) {
+            const grid = document.getElementById('cityGrid');
+            grid.innerHTML = `<div class="section" style="grid-column: 1 / -1;">
+                <h2 class="section-title">7-Day Forecast for ${forecastData.city}</h2>
+            </div>`;
+
+            forecastData.daily.forEach(day => {
+                const card = document.createElement('div');
+                card.className = 'city-card';
+
+                const categoryInfo = OpenMeteoAQ.getAQICategory(day.aqi);
+                const date = new Date(day.date);
+                const dateStr = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+
+                card.innerHTML = `
+                    <div class="city-name">
+                        📅 ${dateStr}
+                    </div>
+                    <div class="aqi-large" style="color: ${categoryInfo.color};">
+                        ${day.aqi}
+                    </div>
+                    <div class="aqi-category" style="background-color: ${categoryInfo.color}20; color: ${categoryInfo.color}; border: 1px solid ${categoryInfo.color};">
+                        ${day.category}
+                    </div>
+                    
+                    <div class="pollutant-grid">
+                        <div class="pollutant-item">
+                            <div class="pollutant-label">PM2.5</div>
+                            <div class="pollutant-value">${day.pm25} μg/m³</div>
+                        </div>
+                        <div class="pollutant-item">
+                            <div class="pollutant-label">PM10</div>
+                            <div class="pollutant-value">${day.pm10} μg/m³</div>
+                        </div>
+                    </div>
+                `;
+
+                grid.appendChild(card);
+            });
+        }
+
+        function updateTimestamp() {
+            const timestamp = document.getElementById('timestamp');
+            timestamp.textContent = `Last updated: ${new Date().toLocaleString()}`;
+        }
+
+        // Auto-load on page load
+        window.addEventListener('load', () => {
+            setTimeout(loadAllCities, 500);
+        });
+    </script>
+</body>
+
+</html>
